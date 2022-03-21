@@ -9,7 +9,7 @@ Console.WriteLine("\nPlease enter the environment to which you want to import ([
 var env = Console.ReadLine() ?? "l";
 Console.WriteLine("\n");
 
-await Importer.Run(VlimpersFlagImporter.ImportRecords, token, path, GetHost(env));
+await Importer.Run(VlimpersFlagImporter.ProcessFile, token, path, GetHost(env));
 
 Hosts GetHost(string arg)
     => arg switch

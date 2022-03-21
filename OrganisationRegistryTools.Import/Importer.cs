@@ -20,7 +20,7 @@ public enum Hosts
 
 public class Importer
 {
-    public static async Task Run(Func<HttpClient, string, JsonSerializerSettings, Task> importRecords, string authToken, string path, Hosts hosts = Hosts.Local)
+    public static async Task Run(Func<HttpClient, string, string, JsonSerializerSettings, Task> processFile, string authToken, string path, Hosts hosts = Hosts.Local)
     {
         var host = GetHostUrl(hosts);
 
@@ -76,7 +76,24 @@ public class Importer
         JsonConvert.DefaultSettings =
             () => jsonSerializerSettings;
 
-        await importRecords(client, path, jsonSerializerSettings);
+        await ImportRecords(processFile, client, path, jsonSerializerSettings);
+    }
+
+    public static async Task ImportRecords(Func<HttpClient, string, string, JsonSerializerSettings, Task> processFile, HttpClient client, string path, JsonSerializerSettings jsonSerializerSettings)
+    {
+        var filesToProcess = Directory.EnumerateFiles(path);
+
+        foreach (var input in filesToProcess.Where(s => !s.Contains(".result.")))
+        {
+            var directoryName = Path.GetDirectoryName(input);
+
+            if (directoryName == null)
+                throw new NullReferenceException("directoryName");
+
+            var output = Path.Combine(directoryName, $"{Path.GetFileNameWithoutExtension(input)}.result{Path.GetExtension(input)}");
+
+            await processFile(client, input, output, jsonSerializerSettings);
+        }
     }
 
     private static string GetHostUrl(Hosts hosts)

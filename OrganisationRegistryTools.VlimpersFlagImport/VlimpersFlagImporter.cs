@@ -9,24 +9,7 @@ namespace OrganisationRegistryTools.VlimpersFlagImport;
 
 public class VlimpersFlagImporter
 {
-    public static async Task ImportRecords(HttpClient client, string path, JsonSerializerSettings jsonSerializerSettings)
-    {
-        var filesToProcess = Directory.EnumerateFiles(path);
-
-        foreach (var input in filesToProcess.Where(s => !s.Contains(".result.")))
-        {
-            var directoryName = Path.GetDirectoryName(input);
-
-            if (directoryName == null)
-                throw new NullReferenceException("directoryName");
-            
-            var output = Path.Combine(directoryName, $"{Path.GetFileNameWithoutExtension(input)}.result{Path.GetExtension(input)}");
-
-            await ProcessFile(client, input, output, jsonSerializerSettings);
-        }
-    }
-
-    private static async Task ProcessFile(HttpClient client, string input, string output, JsonSerializerSettings jsonSerializerSettings)
+    public static async Task ProcessFile(HttpClient client, string input, string output, JsonSerializerSettings jsonSerializerSettings)
     {
         await using var writer = File.CreateText(output);
 
