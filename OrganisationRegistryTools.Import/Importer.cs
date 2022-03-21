@@ -52,11 +52,6 @@ public class Importer
             TypeNameHandling = TypeNameHandling.None
         };
 
-        // var resolver = _jsonSerializerSettings.ContractResolver as DefaultContractResolver;
-        // if (resolver != null)
-        //     resolver.NamingStrategy.ProcessDictionaryKeys = false;
-
-
         jsonSerializerSettings.ContractResolver = new OrganisationRegistryContractResolver
         {
             NamingStrategy = new CamelCaseNamingStrategy()
