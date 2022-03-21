@@ -24,7 +24,7 @@ public class VlimpersFlagImporter
         await foreach (var updateInfo in reader.GetRecordsAsync<OrganisationToChangeVlimpersFor>())
             try
             {
-                await DoWork(client, jsonSerializerSettings, updateInfo);
+                await ProcessRecord(client, updateInfo);
                 Console.WriteLine("    Success");
             }
             catch (Exception ex)
@@ -35,7 +35,7 @@ public class VlimpersFlagImporter
             }
     }
 
-    private static async Task DoWork(HttpClient client, JsonSerializerSettings jsonSerializerSettings, OrganisationToChangeVlimpersFor flagToUpdate)
+    private static async Task ProcessRecord(HttpClient client, OrganisationToChangeVlimpersFor flagToUpdate)
     {
         var targetUri = $"v1/organisations/{flagToUpdate.OrganisationId}/vlimpers";
 

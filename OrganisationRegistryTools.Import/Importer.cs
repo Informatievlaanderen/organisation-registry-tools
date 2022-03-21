@@ -94,6 +94,8 @@ public class Importer
 
             await processFile(client, input, output, jsonSerializerSettings);
         }
+        
+        Console.WriteLine($"You can find the logfiles here: {path}");
     }
 
     private static string GetHostUrl(Hosts hosts)
