@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrganisationRegistryTools.I
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrganisationRegistryTools.OR-1017.VlimpersKeyImport", "OrganisationRegistryTools.OR-1017.VlimpersKeyImport\OrganisationRegistryTools.OR-1017.VlimpersKeyImport.csproj", "{7AA08CD8-C0E9-496D-BD30-ED2D28F69A47}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrganisationRegistryTools.OR-1018.OvoNumberActivation", "OrganisationRegistryTools.OR-1018.OvoNumberActivation\OrganisationRegistryTools.OR-1018.OvoNumberActivation.csproj", "{99E76D18-7A62-41B4-98B3-C8FE68B40F88}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{7AA08CD8-C0E9-496D-BD30-ED2D28F69A47}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AA08CD8-C0E9-496D-BD30-ED2D28F69A47}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AA08CD8-C0E9-496D-BD30-ED2D28F69A47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99E76D18-7A62-41B4-98B3-C8FE68B40F88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99E76D18-7A62-41B4-98B3-C8FE68B40F88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99E76D18-7A62-41B4-98B3-C8FE68B40F88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99E76D18-7A62-41B4-98B3-C8FE68B40F88}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
