@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 using OrganisationRegistryTools.Import;
-using OrganisationRegistryTools.VlimpersFlagImport;
+using OrganisationRegistryTools.OR_1018.OvoNumberActivation;
 
 Console.WriteLine("Please enter an authToken:");
 var token = Console.ReadLine() ?? "";
@@ -13,7 +13,7 @@ if (string.IsNullOrWhiteSpace(path))
 var env = Console.ReadLine() ?? "l";
 Console.WriteLine("\n");
 
-await Importer.Run(VlimpersFlagImporter.ProcessFile, token, path, GetHost(env));
+await Importer.Run(OvoNumberActivationImporter.ProcessFile, token, path, GetHost(env));
 
 Hosts GetHost(string arg)
     => arg switch

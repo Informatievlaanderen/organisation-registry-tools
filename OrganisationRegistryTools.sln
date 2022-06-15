@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrganisationRegistryTools.O
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrganisationRegistryTools.OR-1037.OvoNumberDeactivation", "OrganisationRegistryTools.OR-1037.OvoNumberDeactivation\OrganisationRegistryTools.OR-1037.OvoNumberDeactivation.csproj", "{637A3B45-A953-4C3E-B790-3ECE9679D4B2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrganisationRegistryTools.OR-1074.CloseAllVlimperskeys", "OrganisationRegistryTools.OR-1074.CloseAllVlimperskeys\OrganisationRegistryTools.OR-1074.CloseAllVlimperskeys.csproj", "{B3A85B50-AA7A-4C76-9FDE-DDA50A419021}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{637A3B45-A953-4C3E-B790-3ECE9679D4B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{637A3B45-A953-4C3E-B790-3ECE9679D4B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{637A3B45-A953-4C3E-B790-3ECE9679D4B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3A85B50-AA7A-4C76-9FDE-DDA50A419021}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3A85B50-AA7A-4C76-9FDE-DDA50A419021}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3A85B50-AA7A-4C76-9FDE-DDA50A419021}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3A85B50-AA7A-4C76-9FDE-DDA50A419021}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

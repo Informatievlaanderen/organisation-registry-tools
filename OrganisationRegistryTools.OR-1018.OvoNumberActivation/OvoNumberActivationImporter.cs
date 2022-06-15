@@ -5,9 +5,9 @@ using CsvHelper;
 using CsvHelper.Configuration;
 using Newtonsoft.Json;
 
-namespace OrganisationRegistryTools.VlimpersFlagImport;
+namespace OrganisationRegistryTools.OR_1018.OvoNumberActivation;
 
-public class VlimpersFlagImporter
+public class OvoNumberActivationImporter
 {
     public static async Task ProcessFile(HttpClient client, string input, string output,
         JsonSerializerSettings jsonSerializerSettings)
@@ -50,7 +50,7 @@ public class VlimpersFlagImporter
 
         var targetUri = $"v1/organisations/{organisation.Id}";
 
-        Console.WriteLine($"Patching host {client.BaseAddress}, resource {targetUri}, setting OperationalValidTo = {organisationToActivate.EndDate}");
+        Console.WriteLine($"Patching host {client.BaseAddress}, resource {targetUri}, setting OperationalValidFrom = {organisationToActivate.StartDate}");
 
         var updateResponse = await client.PutAsync(targetUri,
             new StringContent(
@@ -61,11 +61,11 @@ public class VlimpersFlagImporter
                     Name = organisation.Name,
                     PurposeIds = organisation.Purposes?.Select(p=>p.PurposeId).ToList()??new List<Guid>(),
                     ShortName = organisation.ShortName??string.Empty,
-                    ValidFrom = organisation.Validity.Start,
-                    ValidTo = organisation.Validity.End,
-                    OperationalValidFrom = organisation.OperationalValidity.Start,
+                    ValidFrom = organisation.Validity?.Start,
+                    ValidTo = organisation.Validity?.End,
+                    OperationalValidTo = organisation.OperationalValidity?.End,
                     ShowOnVlaamseOverheidSites = organisation.ShowOnVlaamseOverheidSites,
-                    OperationalValidTo = organisationToActivate.EndDate
+                    OperationalValidFrom = organisationToActivate.StartDate
                 }), Encoding.UTF8, MediaTypeNames.Application.Json));
 
         if (!updateResponse.IsSuccessStatusCode)
@@ -78,11 +78,11 @@ public class VlimpersFlagImporter
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
         public string? ShortName { get; set; }
-        public List<Purpose>? Purposes { get; set; }
+        public List<Purpose>? Purposes { get; set; } = null!;
         public bool ShowOnVlaamseOverheidSites { get; set; }
-        public Validity Validity { get; set; }
+        public Validity? Validity { get; set; }
         public string? Article { get; set; }
-        public Validity OperationalValidity { get; set; }
+        public Validity? OperationalValidity { get; set; }
     }
 
     private class Validity
@@ -90,8 +90,11 @@ public class VlimpersFlagImporter
         public DateTime? Start { get; set; } = null;
         public DateTime? End { get; set; } = null;
     }
+
     private class Purpose
     {
         public Guid PurposeId { get; set; }
     }
 }
+
+

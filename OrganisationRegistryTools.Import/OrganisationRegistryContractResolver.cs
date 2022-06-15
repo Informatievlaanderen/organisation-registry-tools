@@ -2,20 +2,19 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace OrganisationRegistryTools.Import
+namespace OrganisationRegistryTools.Import;
+
+public class OrganisationRegistryContractResolver : DefaultContractResolver
 {
-    public class OrganisationRegistryContractResolver : DefaultContractResolver
+    public bool SetStringDefaultValueToEmptyString { get; set; }
+
+    protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
     {
-        public bool SetStringDefaultValueToEmptyString { get; set; }
+        var prop = base.CreateProperty(member, memberSerialization);
 
-        protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
-        {
-            var prop = base.CreateProperty(member, memberSerialization);
+        if (prop.PropertyType == typeof(string) && SetStringDefaultValueToEmptyString)
+            prop.DefaultValue = "";
 
-            if (prop.PropertyType == typeof(string) && SetStringDefaultValueToEmptyString)
-                prop.DefaultValue = "";
-
-            return prop;
-        }
+        return prop;
     }
 }

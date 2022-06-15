@@ -29,7 +29,7 @@ public class GuidConverter : JsonConverter
     {
         if (EqualityComparer<Guid?>.Default.Equals((Guid?)value, default))
             writer.WriteValue(string.Empty);
-        else if (EqualityComparer<Guid>.Default.Equals((Guid)(value!), default))
+        else if (EqualityComparer<Guid>.Default.Equals((Guid)(value), default))
             writer.WriteValue(string.Empty);
         else
             writer.WriteValue((Guid)value);

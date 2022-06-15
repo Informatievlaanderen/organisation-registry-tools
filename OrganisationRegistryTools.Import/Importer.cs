@@ -22,6 +22,14 @@ public class Importer
 {
     public static async Task Run(Func<HttpClient, string, string, JsonSerializerSettings, Task> processFile, string authToken, string path, Hosts hosts = Hosts.Local)
     {
+        var client = GetClient(authToken, hosts);
+        var jsonSerializerSettings = GetJsonSerializerSettings();
+
+        await ImportRecords(processFile, client, path, jsonSerializerSettings);
+    }
+
+    public static HttpClient GetClient(string authToken, Hosts hosts)
+    {
         var host = GetHostUrl(hosts);
 
         var client = new HttpClient
@@ -34,6 +42,11 @@ public class Importer
             }
         };
 
+        return client;
+    }
+
+    public static JsonSerializerSettings GetJsonSerializerSettings()
+    {
         var jsonSerializerSettings = new JsonSerializerSettings
         {
             ContractResolver = new OrganisationRegistryContractResolver
@@ -75,8 +88,7 @@ public class Importer
 
         JsonConvert.DefaultSettings =
             () => jsonSerializerSettings;
-
-        await ImportRecords(processFile, client, path, jsonSerializerSettings);
+        return jsonSerializerSettings;
     }
 
     public static async Task ImportRecords(Func<HttpClient, string, string, JsonSerializerSettings, Task> processFile, HttpClient client, string path, JsonSerializerSettings jsonSerializerSettings)

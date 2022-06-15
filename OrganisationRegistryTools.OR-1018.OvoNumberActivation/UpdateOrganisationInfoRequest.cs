@@ -1,4 +1,4 @@
-﻿namespace OrganisationRegistryTools.VlimpersFlagImport;
+﻿namespace OrganisationRegistryTools.OR_1018.OvoNumberActivation;
 
 public class UpdateOrganisationInfoRequest
 {
