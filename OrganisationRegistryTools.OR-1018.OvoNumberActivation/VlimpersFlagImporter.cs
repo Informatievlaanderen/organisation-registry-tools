@@ -57,13 +57,13 @@ public class VlimpersFlagImporter
                 JsonConvert.SerializeObject(new UpdateOrganisationInfoRequest()
                 {
                     Article = organisation.Article,
-                    Description = organisation.Description,
+                    Description = organisation.Description??string.Empty,
                     Name = organisation.Name,
-                    PurposeIds = organisation.PurposeIds,
-                    ShortName = organisation.ShortName,
-                    ValidFrom = organisation.Validity.Start,
-                    ValidTo = organisation.Validity.End,
-                    OperationalValidTo = organisation.OperationalValidity.End,
+                    PurposeIds = organisation.Purposes?.Select(p=>p.PurposeId).ToList()??new List<Guid>(),
+                    ShortName = organisation.ShortName??string.Empty,
+                    ValidFrom = organisation.Validity?.Start,
+                    ValidTo = organisation.Validity?.End,
+                    OperationalValidTo = organisation.OperationalValidity?.End,
                     ShowOnVlaamseOverheidSites = organisation.ShowOnVlaamseOverheidSites,
                     OperationalValidFrom = organisationToActivate.StartDate
                 }), Encoding.UTF8, MediaTypeNames.Application.Json));
@@ -78,11 +78,11 @@ public class VlimpersFlagImporter
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
         public string? ShortName { get; set; }
-        public List<Guid>? PurposeIds { get; set; }
+        public List<Purpose>? Purposes { get; set; }
         public bool ShowOnVlaamseOverheidSites { get; set; }
-        public Validity Validity { get; set; }
+        public Validity? Validity { get; set; }
         public string? Article { get; set; }
-        public Validity OperationalValidity { get; set; }
+        public Validity? OperationalValidity { get; set; }
     }
 
     private class Validity
@@ -90,4 +90,11 @@ public class VlimpersFlagImporter
         public DateTime? Start { get; set; } = null;
         public DateTime? End { get; set; } = null;
     }
+
+    private class Purpose
+    {
+        public Guid PurposeId { get; set; }
+    }
 }
+
+
