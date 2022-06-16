@@ -1,10 +1,13 @@
-﻿using OrganisationRegistryTools.Import;
+﻿using System.Net;
+using OrganisationRegistryTools.Import;
 
 namespace OrganisationRegistryTools.OR_935.SyncWithKBO;
 
 public static class KboSynchronisatie
 {
-    public static async Task Start(HttpClient client, Action<string> output)
+    public record LogItem(string Uri, bool IsSuccess, Guid OrganisationId, string Error, HttpStatusCode? HttpCode = null);
+    
+    public static async Task Start(HttpClient client, HashSet<Guid> organisationIdsToSkip, Action<LogItem> output)
     {
         var allOrganisations = await Importer.GetRelevantOrganisations<Organisation>(
             client,
@@ -12,34 +15,49 @@ public static class KboSynchronisatie
             "q=kboNumber:/[0123456789][0123456789][0123456789][0123456789][0123456789][0123456789][0123456789][0123456789][0123456789][0123456789]/" +
             "&scroll=true");
 
-        await SyncOrganisations(client, output, allOrganisations);
+        await SyncOrganisations(client, organisationIdsToSkip, output, allOrganisations);
     }
 
-    private static async Task SyncOrganisations(HttpClient client, Action<string> output,
-        List<Organisation> allOrganisations)
+    private static async Task SyncOrganisations(
+        HttpClient client,
+        IReadOnlySet<Guid> organisationIdsToSkip,
+        Action<LogItem> output,
+        IEnumerable<Organisation> allOrganisations)
     {
-        foreach (var organisation in allOrganisations)
+        var organisationsToSync = allOrganisations.Where(organisation => !organisationIdsToSkip.Contains(organisation.Id)).ToList();
+
+        var processedCount = 0;
+        var totalCount = organisationsToSync.Count;
+        
+        Console.WriteLine($"Start syncing {totalCount} organisations");
+        foreach (var organisation in organisationsToSync)
         {
             await TrySyncOrganisation(client, output, organisation);
+
+            processedCount++;
+            if (processedCount % 10 == 0)
+                Console.WriteLine($"Synced {processedCount} of {totalCount} organisations");
         }
     }
 
-    private static async Task TrySyncOrganisation(HttpClient client, Action<string> writeOutput, Organisation organisation)
+    private static async Task TrySyncOrganisation(HttpClient client, Action<LogItem> writeOutput, Organisation organisation)
     {
+        var targetUri = $"v1/organisations/{organisation.Id}/kbo/sync";
+
         try
         {
-            var targetUri =
-                $"v1/organisations/{organisation.Id}/kbo/sync";
-
             var updateResponse = await client.PutAsync(targetUri, new StringContent(""));
 
-            writeOutput($"{targetUri}\n" +
-                        $"\tsuccess: {updateResponse.IsSuccessStatusCode}\n" +
-                        $"\tstatusCode: {updateResponse.StatusCode}\n" +
-                        $"\terror: {await updateResponse.Content.ReadAsStringAsync()}");        }
+            var updateResponseContent = await updateResponse.Content.ReadAsStringAsync();
+            writeOutput(new LogItem(targetUri,
+                updateResponse.IsSuccessStatusCode,
+                organisation.Id,
+                updateResponseContent,
+                updateResponse.StatusCode));
+        }
         catch (Exception ex)
         {
-            writeOutput($"{organisation.Id}: {ex.Message}");
+            writeOutput(new LogItem(targetUri, false, organisation.Id, ex.Message));
         }
     }
 
