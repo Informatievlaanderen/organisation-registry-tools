@@ -1,6 +1,7 @@
 ﻿using System.Net.Mime;
 using System.Text;
 using Newtonsoft.Json;
+using OrganisationRegistryTools.Import;
 
 namespace OrganisationRegistryTools.OR_1074.CloseAllVlimperskeys;
 
@@ -12,40 +13,13 @@ public class VlimpersKeysTerminator
 
     public static async Task ProcessFile(HttpClient client, Action<string> writeOutput)
     {
-        // await using var writer = File.CreateText(output);
+        var organisations = await Importer.GetRelevantOrganisations<Organisation>(
+            client,
+            "/v1/search/organisations?" +
+            $"q=(keys.keyTypeId:{VlimpersKeyTypeId.ToString().ToLower()}%20OR%20keys.keyTypeId:{VlimpersKortKeyTypeId.ToString().ToLower()})" +
+            "&scroll=true");
 
-        var response =
-            await client.GetAsync("/v1/search/organisations?" +
-                                  $"q=(keys.keyTypeId:{VlimpersKeyTypeId.ToString().ToLower()}%20OR%20keys.keyTypeId:{VlimpersKortKeyTypeId.ToString().ToLower()})" +
-                                  "&scroll=true");
-        response.EnsureSuccessStatusCode();
-
-        var searchResponseHeader =
-            JsonConvert.DeserializeObject<SearchResponseHeader>(response.Headers
-                .GetValues(SearchConstants.SearchMetaDataHeaderName).First());
-        var content = await response.Content.ReadAsStringAsync();
-        var maybeOrganisations = JsonConvert.DeserializeObject<List<Organisation>>(content);
-
-        var allOrganisations = new List<Organisation>();
-
-        while (maybeOrganisations is { } organisations && organisations.Any())
-        {
-            var scrollResponse =
-                await client.GetAsync($"/v1/search/organisations/scroll?id={searchResponseHeader.ScrollId}");
-
-            scrollResponse.EnsureSuccessStatusCode();
-
-            searchResponseHeader =
-                JsonConvert.DeserializeObject<SearchResponseHeader>(response.Headers
-                    .GetValues(SearchConstants.SearchMetaDataHeaderName).First());
-
-            content = await scrollResponse.Content.ReadAsStringAsync();
-            maybeOrganisations = JsonConvert.DeserializeObject<List<Organisation>>(content);
-
-            allOrganisations.AddRange(maybeOrganisations);
-        }
-
-        await ProcessOrganisations(client, writeOutput, allOrganisations);
+        await ProcessOrganisations(client, writeOutput, organisations);
     }
 
     private static async Task ProcessOrganisations(HttpClient client, Action<string> writeOutput,
@@ -79,8 +53,10 @@ public class VlimpersKeysTerminator
                             ValidTo = new DateTime(2022, 6, 30)
                         }), Encoding.UTF8, MediaTypeNames.Application.Json));
 
-                writeOutput(
-                    $"{key.OrganisationKeyId}: {updateResponse.IsSuccessStatusCode} {updateResponse.StatusCode}");
+                writeOutput($"/v1/organisations/{organisation.Id}/keys/{key.OrganisationKeyId}\n" +
+                            $"\tsuccess: {updateResponse.IsSuccessStatusCode}\n" +
+                            $"\tstatusCode: {updateResponse.StatusCode}\n" +
+                            $"\terror: {await updateResponse.Content.ReadAsStringAsync()}");
             }
             catch (Exception ex)
             {
@@ -89,22 +65,12 @@ public class VlimpersKeysTerminator
         }
     }
 
-    internal class SearchResponseHeader
-    {
-        public string ScrollId { get; set; }
-    }
-
-    public class SearchConstants
-    {
-        public const string SearchMetaDataHeaderName = "x-search-metadata";
-    }
-
     public class Organisation
     {
         public Guid Id { get; set; }
-        public string Name { get; set; }
-        public string OvoNumber { get; set; }
-        public List<Key> Keys { get; set; }
+        public string Name { get; set; } = null!;
+        public string OvoNumber { get; set; } = null!;
+        public List<Key> Keys { get; set; } = null!;
     }
 
     public class Key
@@ -112,9 +78,9 @@ public class VlimpersKeysTerminator
         public Guid OrganisationKeyId { get; set; }
 
         public Guid KeyTypeId { get; set; }
-        public string KeyTypeName { get; set; }
-        public string Value { get; set; }
-        public Validity Validity { get; set; }
+        public string KeyTypeName { get; set; } = null!;
+        public string Value { get; set; } = null!;
+        public Validity Validity { get; set; } = null!;
     }
 
     public class Validity

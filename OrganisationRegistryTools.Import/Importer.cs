@@ -28,13 +28,74 @@ public class Importer
         await ImportRecords(processFile, client, path, jsonSerializerSettings);
     }
 
-    public static HttpClient GetClient(string authToken, Hosts hosts)
+    public static async Task<List<T>> GetRelevantOrganisations<T>(HttpClient client, string searchQuery)
     {
-        var host = GetHostUrl(hosts);
+        var response =
+            await client.GetAsync(searchQuery);
+        response.EnsureSuccessStatusCode();
+
+        var maybeSearchResponseHeader =
+            JsonConvert.DeserializeObject<SearchResponseHeader>(response.Headers
+                .GetValues(SearchConstants.SearchMetaDataHeaderName).First());
+
+        var content = await response.Content.ReadAsStringAsync();
+        var maybeOrganisations = JsonConvert.DeserializeObject<List<T>>(content);
+
+        var allOrganisations = new List<T>();
+        while (maybeOrganisations is { } organisations && organisations.Any())
+        {
+            if (maybeSearchResponseHeader is not { } searchResponseHeader)
+                throw new NullReferenceException("Something went wrong while deserializing the searchResponseHeader, it returned null");
+
+            allOrganisations.AddRange(organisations);
+
+            var scrollResponse =
+                await client.GetAsync($"/v1/search/organisations/scroll?id={searchResponseHeader.ScrollId}");
+
+            scrollResponse.EnsureSuccessStatusCode();
+
+            maybeSearchResponseHeader =
+                JsonConvert.DeserializeObject<SearchResponseHeader>(response.Headers
+                    .GetValues(SearchConstants.SearchMetaDataHeaderName).First());
+
+            content = await scrollResponse.Content.ReadAsStringAsync();
+            maybeOrganisations = JsonConvert.DeserializeObject<List<T>>(content);
+        }
+
+        return allOrganisations;
+    }
+    
+    private class SearchResponseHeader
+    {
+        public string ScrollId { get; set; } = null!;
+    }
+
+    private class SearchConstants
+    {
+        public const string SearchMetaDataHeaderName = "x-search-metadata";
+    }
+    
+    public static HttpClient GetClient()
+    {
+        Console.WriteLine("Please enter an authToken:");
+        var token = Console.ReadLine() ?? "";
+
+        Console.WriteLine("\nPlease enter the environment to which you want to import ([L]ocal, [s]taging, [p]roduction):");
+        var env = Console.ReadLine() ?? "l";
+        Console.WriteLine("\n");
+
+        var host = GetHost(env);
+        
+        return GetClient(token, host);
+    }
+
+    private static HttpClient GetClient(string authToken, Hosts host)
+    {
+        var hostUrl = GetHostUrl(host);
 
         var client = new HttpClient
         {
-            BaseAddress = new Uri(host),
+            BaseAddress = new Uri(hostUrl),
             DefaultRequestHeaders =
             {
                 { "Accept", "application/json" },
@@ -45,6 +106,14 @@ public class Importer
         return client;
     }
 
+    static Hosts GetHost(string arg)
+        => arg switch
+        {
+            "s" => Hosts.Staging,
+            "p" => Hosts.Production,
+            _ => Hosts.Local
+        };
+    
     public static JsonSerializerSettings GetJsonSerializerSettings()
     {
         var jsonSerializerSettings = new JsonSerializerSettings
