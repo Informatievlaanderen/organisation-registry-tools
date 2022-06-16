@@ -60,6 +60,8 @@ public class Importer
 
             content = await scrollResponse.Content.ReadAsStringAsync();
             maybeOrganisations = JsonConvert.DeserializeObject<List<T>>(content);
+            
+            Console.WriteLine($"Retrieving organisations, currently {allOrganisations.Count} organisations retrieved.");
         }
 
         return allOrganisations;
