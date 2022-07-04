@@ -12,6 +12,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using ApiTestAppForBusiness.Model;
+using Microsoft.Extensions.Configuration;
+using Environment = ApiTestAppForBusiness.Model.Environment;
 
 namespace ApiTestAppForBusiness;
 
@@ -20,8 +23,24 @@ namespace ApiTestAppForBusiness;
 /// </summary>
 public partial class MainWindow : Window
 {
+    private readonly ApiConfiguration _apiConfiguration;
+    public Environment CurrentEnvironment { get; set; }
+
     public MainWindow()
     {
         InitializeComponent();
+
+        var config = new ConfigurationBuilder()
+            .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+            .AddJsonFile("appsettings.json")
+            .AddJsonFile("appsettings.edit.json", optional: true)
+            .AddJsonFile("appsettings.powerbi.json", optional: true)
+            .Build();
+
+        _apiConfiguration = ApiConfiguration.GetInstance(config);
+        CurrentEnvironment = _apiConfiguration.Environments.First();
+
+        ApiControl.SetConfig(CurrentEnvironment);
     }
+
 }
