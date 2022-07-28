@@ -15,4 +15,3 @@ await VlimpersKeysTerminator.ProcessFile(client, output =>
     Console.WriteLine(output);
     fileWriter.WriteLine(output);
 });
-

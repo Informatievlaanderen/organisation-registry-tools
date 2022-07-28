@@ -28,7 +28,7 @@ public class Importer
         await ImportRecords(processFile, client, path, jsonSerializerSettings);
     }
 
-    public static async Task<List<T>> GetRelevantOrganisations<T>(HttpClient client, string searchQuery)
+    public static async Task<List<T>> GetOrganisations<T>(HttpClient client, string searchQuery)
     {
         var response =
             await client.GetAsync(searchQuery);

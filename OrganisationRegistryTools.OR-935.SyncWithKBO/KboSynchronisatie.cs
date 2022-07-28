@@ -9,7 +9,7 @@ public static class KboSynchronisatie
     
     public static async Task Start(HttpClient client, HashSet<Guid> organisationIdsToSkip, Action<LogItem> output)
     {
-        var allOrganisations = await Importer.GetRelevantOrganisations<Organisation>(
+        var allOrganisations = await Importer.GetOrganisations<Organisation>(
             client,
             "/v1/search/organisations?" +
             "q=kboNumber:/[0123456789][0123456789][0123456789][0123456789][0123456789][0123456789][0123456789][0123456789][0123456789][0123456789]/" +

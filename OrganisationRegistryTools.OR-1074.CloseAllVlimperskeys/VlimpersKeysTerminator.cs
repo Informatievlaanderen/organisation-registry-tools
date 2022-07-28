@@ -13,7 +13,7 @@ public class VlimpersKeysTerminator
 
     public static async Task ProcessFile(HttpClient client, Action<string> writeOutput)
     {
-        var organisations = await Importer.GetRelevantOrganisations<Organisation>(
+        var organisations = await Importer.GetOrganisations<Organisation>(
             client,
             "/v1/search/organisations?" +
             $"q=(keys.keyTypeId:{VlimpersKeyTypeId.ToString().ToLower()}%20OR%20keys.keyTypeId:{VlimpersKortKeyTypeId.ToString().ToLower()})" +
