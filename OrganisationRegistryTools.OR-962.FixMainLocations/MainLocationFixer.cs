@@ -8,6 +8,7 @@ namespace OrganisationRegistryTools.OR_962.FixMainLocations;
 public class MainLocationFixer
 {
     private static readonly Guid KBOLocationTypeId = new("537C0B5B-8AB8-FC3D-0B37-F8249CBDD3BA");
+    private static readonly Guid MaatschappelijkeZetelTypeId = new("2a6c2912-6202-1693-e3b8-c9db9f33aec4");
 
     public static async Task ProcessFile(HttpClient client, Action<string> writeOutput)
     {
@@ -28,28 +29,56 @@ public class MainLocationFixer
 
     private static async Task ProcessLocations(HttpClient client, Action<string> writeOutput, Organisation organisation)
     {
-        if (!(organisation.Locations?.Any() ?? false))
+        writeOutput($"Processing locations for organisation {organisation.Id} ({organisation.OvoNumber}):");
+        
+        const string noLocationsChangedBecause = "\tNo locations changed because";
+        
+        if (string.IsNullOrWhiteSpace(organisation.KboNumber))
         {
-            writeOutput($"no locations found for organisation {organisation.Id}");
+            writeOutput($"{noLocationsChangedBecause} no Kbo Number");
             return;
         }
-        
-        var maybeKboLocation = organisation.Locations.FirstOrDefault(l => l.LocationTypeId == KBOLocationTypeId);
-        var maybeMainLocation = organisation.Locations.FirstOrDefault(l => l.IsMainLocation);
 
-        if (maybeMainLocation is { } mainLocation
-            && maybeKboLocation is { } kboLocation
-            && kboLocation.LocationId == mainLocation.LocationId
-            && kboLocation.OrganisationLocationId != mainLocation.OrganisationLocationId)
+        if (!(organisation.Locations?.Any() ?? false))
         {
-            await UpdateLocationMainLocation(client, organisation.Id, mainLocation, writeOutput, "", false);
-            await UpdateLocationMainLocation(client, organisation.Id, kboLocation, writeOutput, "KBO", true);
+            writeOutput($"{noLocationsChangedBecause} no locations found");
+            return;
+        }
+
+        var maybeKboLocation = organisation.Locations
+            .FirstOrDefault(l => l.LocationTypeId == KBOLocationTypeId && l.Validity.OverlapsWithToday());
+        if (maybeKboLocation is not { } kboLocation)
+        {
+            writeOutput(
+                $"{noLocationsChangedBecause} no valid location 'Maatschappelijke zetel volgens KBO' found");
+            return;
+        }
+
+        var maybeMainLocation = organisation.Locations
+            .FirstOrDefault(l => l.IsMainLocation && l.Validity.OverlapsWithToday());
+        if (maybeMainLocation is not { } mainLocation)
+        {
+            writeOutput($"{noLocationsChangedBecause} no valid main location found");
+            return;
+        }
+
+        if (!(mainLocation.LocationTypeId is null || mainLocation.LocationTypeId == MaatschappelijkeZetelTypeId))
+        {
+            writeOutput($"{noLocationsChangedBecause} no valid location 'Maatschappelijke zetel' (or empty locationtype) found");
+            return;
+        }
+
+        if (kboLocation.LocationId == mainLocation.LocationId)
+        {
+            await UpdateLocationMainLocation(client, organisation, mainLocation, writeOutput, "", false);
+            await UpdateLocationMainLocation(client, organisation, kboLocation, writeOutput, "KBO", true);
         }
     }
 
-    private static async Task UpdateLocationMainLocation(HttpClient client, Guid organisationId, Location location, Action<string> writeOutput, string source, bool isMainLocation)
+    private static async Task UpdateLocationMainLocation(HttpClient client, Organisation organisation, Location location,
+        Action<string> writeOutput, string source, bool isMainLocation)
     {
-        var targetUri = $"v1/organisations/{organisationId}/locations/{location.OrganisationLocationId}";
+        var targetUri = $"v1/organisations/{organisation.Id}/locations/{location.OrganisationLocationId}";
 
         try
         {
@@ -66,19 +95,22 @@ public class MainLocationFixer
                         ValidTo = location.Validity.End,
                     }), Encoding.UTF8, MediaTypeNames.Application.Json));
 
-            writeOutput($"{targetUri}\n" +
-                        $"\tsuccess: {updateResponse.IsSuccessStatusCode}\n" +
-                        $"\tstatusCode: {updateResponse.StatusCode}\n");
-            if (!updateResponse.IsSuccessStatusCode) 
-                writeOutput($"\terror: {await updateResponse.Content.ReadAsStringAsync()}");
+            writeOutput("\tAttempted change location:\n" +
+                        $"\t{targetUri}\n" +
+                        $"\t\tsuccess: {updateResponse.IsSuccessStatusCode}\n" +
+                        $"\t\tstatusCode: {updateResponse.StatusCode}\n");
+            if (!updateResponse.IsSuccessStatusCode)
+                writeOutput($"\t\terror: {await updateResponse.Content.ReadAsStringAsync()}");
         }
         catch (Exception ex)
         {
-            writeOutput($"{targetUri}\n" +
-                        $"\tError: {ex.Message}");
+            writeOutput($"\tError occured when attempting change location:\n" +
+                        $"\t\t{targetUri}\n" +
+                        $"\t\tovonummer: {organisation.OvoNumber}\n" +
+                        $"\t\tError: {ex.Message}");
         }
     }
-    
+
     public class UpdateOrganisationLocationRequest
     {
         public Guid OrganisationLocationId { get; set; }
@@ -89,13 +121,14 @@ public class MainLocationFixer
         public DateTime? ValidTo { get; set; }
         public string? Source { get; set; }
     }
-    
+
     public class Organisation
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
         public string OvoNumber { get; set; } = null!;
         public List<Location> Locations { get; set; } = null!;
+        public string? KboNumber { get; set; }
     }
 
     public class Location
